@@ -1,0 +1,333 @@
+[gd_scene load_steps=4 format=3 uid="uid://bh4dt3sehbxn3"]
+
+[ext_resource type="Texture2D" uid="uid://cjfemq88dxd3s" path="res://addons/virtual_joystick/textures/button.png" id="2_3hojg"]
+[ext_resource type="PackedScene" uid="uid://dmr0fcamx7t56" path="res://addons/virtual_joystick/virtual_joystick_scene.tscn" id="2_74klv"]
+
+[sub_resource type="GDScript" id="GDScript_gvovf"]
+resource_name = "virtual_controller"
+script/source = "extends CanvasLayer
+
+@export_group(\"Left Thumbstick\")
+@export var visibility_left_thumb : VirtualJoystick.Visibility_mode
+@export var enabled_left_thumb : bool
+@export var left_left_thumb : String
+@export var right_left_thumb : String
+@export var up_left_thumb : String
+@export var down_left_thumb : String
+
+@export_group(\"Right Thumbstick\")
+@export var visibility_right_thumb : VirtualJoystick.Visibility_mode
+@export var enabled_right_thumb : bool
+@export var left_right_thumb : String
+@export var right_right_thumb : String
+@export var up_right_thumb : String
+@export var down_right_thumb : String
+
+@export_group(\"A Button\")
+@export var action_a : String
+@export var visible_a : bool
+@export var texture_normal_a : Texture
+@export var texture_pressed_a : Texture
+@export_group(\"B Button\")
+@export var action_b : String
+@export var visible_b : bool
+@export var texture_normal_b : Texture
+@export var texture_pressed_b : Texture
+@export_group(\"X Button\")
+@export var action_x : String
+@export var visible_x : bool
+@export var texture_normal_x : Texture
+@export var texture_pressed_x : Texture
+@export_group(\"Y Button\")
+@export var action_y : String
+@export var visible_y : bool
+@export var texture_normal_y : Texture
+@export var texture_pressed_y : Texture
+
+func _get(property):
+	if property == \"texture_normal_a\":
+		return %ButtonA.texture_normal
+	elif property == \"texture_pressed_a\":
+		return %ButtonA.texture_pressed
+	elif property == \"texture_normal_b\":
+		return %ButtonB.texture_normal
+	elif property == \"texture_pressed_b\":
+		return %ButtonB.texture_pressed
+	elif property == \"texture_normal_x\":
+		return %ButtonX.texture_normal
+	elif property == \"texture_pressed_x\":
+		return %ButtonX.texture_pressed
+	elif property == \"texture_normal_y\":
+		return %ControlY.texture_normal
+	elif property == \"texture_pressed_y\":
+		return %ControlY.texture_pressed
+
+func _set(property, value):
+	if property == \"texture_normal_a\":
+		%ButtonA.texture_normal = value
+		return true
+	elif property == \"texture_pressed_a\":
+		%ButtonA.texture_pressed = value
+		return true
+	elif property == \"texture_normal_b\":
+		%ButtonB.texture_normal = value
+		return true
+	elif property == \"texture_pressed_b\":
+		%ButtonB.texture_pressed = value
+		return true
+	elif property == \"texture_normal_x\":
+		%ButtonX.texture_normal = value
+		return true
+	elif property == \"texture_pressed_x\":
+		%ButtonX.texture_pressed = value
+		return true
+	elif property == \"texture_normal_y\":
+		%ControlY.texture_normal = value
+		return true
+	elif property == \"texture_pressed_y\":
+		%ControlY.texture_pressed = value
+		return true
+	return false
+
+func _get_property_list():
+	return [
+		{ \"name\": \"texture_normal_a\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_pressed_a\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_normal_b\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_pressed_b\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_normal_x\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_pressed_x\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_normal_y\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" },
+		{ \"name\": \"texture_pressed_y\", \"type\": TYPE_OBJECT, \"hint\" : PROPERTY_HINT_RESOURCE_TYPE, \"hint_string\" : \"Texture\" }
+	]
+
+var max_size = .15 # The maximum percentage of the screen height a button should cover
+
+# resize buttons when godot first loads the scene
+func _ready():
+	var size = DisplayServer.window_get_size()
+	
+	var l_thumb = %LeftThumbstick
+	var r_thumb = %RightThumbstick
+	
+	var a : TouchScreenButton = %ButtonA
+	var b : TouchScreenButton = %ButtonB
+	var x : TouchScreenButton = %ButtonX
+	var y : TouchScreenButton = %ButtonY
+	
+	l_thumb.action_left = left_left_thumb
+	l_thumb.action_right = right_left_thumb
+	l_thumb.action_up = up_left_thumb
+	l_thumb.action_down = down_left_thumb
+
+	if not enabled_left_thumb:
+		l_thumb.visible = false
+	l_thumb.visibility_mode = visibility_left_thumb
+
+	r_thumb.action_left = left_right_thumb
+	r_thumb.action_right = right_right_thumb
+	r_thumb.action_up = up_right_thumb
+	r_thumb.action_down = down_right_thumb
+
+	if not enabled_right_thumb:
+		r_thumb.visible = false
+	r_thumb.visibility_mode = visibility_right_thumb
+		
+	# Scale the button size down if it is going to be too large
+	var buttonHeight = a.get_texture_normal().get_size().y
+	var ratio = (size.y * max_size) / buttonHeight
+	
+	# Don't scale the image up
+	if ratio > 1:
+		ratio = 1
+
+	var scale = Vector2(ratio,ratio)
+	
+	a.scale = scale
+	a.action = action_a
+	a.visible = visible_a 
+	a.texture_normal = texture_normal_a
+	a.texture_pressed = texture_pressed_a
+	
+	b.scale = scale
+	b.action = action_b
+	b.visible = visible_b
+	b.texture_normal = texture_normal_b
+	b.texture_pressed = texture_pressed_b
+	
+	x.scale = scale
+	x.action = action_x
+	x.visible = visible_x  
+	x.texture_normal = texture_normal_x
+	x.texture_pressed = texture_pressed_x
+	
+	y.scale = scale
+	y.action = action_y
+	y.visible = visible_y
+	y.texture_normal = texture_normal_y
+	y.texture_pressed = texture_pressed_y
+"
+
+[node name="VirtualControl" type="CanvasLayer"]
+script = SubResource("GDScript_gvovf")
+visibility_left_thumb = 2
+enabled_left_thumb = true
+left_left_thumb = "Left"
+right_left_thumb = "Right"
+action_a = "Jump"
+visible_a = true
+texture_normal_a = ExtResource("2_3hojg")
+texture_normal_b = ExtResource("2_3hojg")
+texture_normal_x = ExtResource("2_3hojg")
+texture_normal_y = ExtResource("2_3hojg")
+
+[node name="HBoxContainerThumbsticks" type="HBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="LeftControl" type="Control" parent="HBoxContainerThumbsticks"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LeftThumbstick" parent="HBoxContainerThumbsticks/LeftControl" instance=ExtResource("2_74klv")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_top = 0.0
+anchor_right = 1.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+joystick_mode = 2
+visibility_mode = 2
+action_left = ""
+action_right = ""
+action_up = ""
+action_down = ""
+
+[node name="RightControl" type="Control" parent="HBoxContainerThumbsticks"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RightThumbstick" parent="HBoxContainerThumbsticks/RightControl" instance=ExtResource("2_74klv")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_top = 0.0
+anchor_right = 1.0
+offset_left = 4.0
+offset_top = 0.0
+offset_right = 4.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+joystick_mode = 2
+visibility_mode = 2
+action_left = "camera_left"
+action_right = "camera_right"
+action_up = "camera_up"
+action_down = "camera_down"
+
+[node name="HBoxContainerButtons" type="HBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Control" type="Control" parent="HBoxContainerButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainerButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TopControl" type="Control" parent="HBoxContainerButtons/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MidControl" type="Control" parent="HBoxContainerButtons/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlY" type="Control" parent="HBoxContainerButtons/VBoxContainer/MidControl"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ButtonY" type="TouchScreenButton" parent="HBoxContainerButtons/VBoxContainer/MidControl/ControlY"]
+unique_name_in_owner = true
+texture_normal = ExtResource("2_3hojg")
+action = "shoot"
+visibility_mode = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainerButtons/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlX" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Control" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/ControlX"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+grow_horizontal = 0
+
+[node name="ButtonX" type="TouchScreenButton" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/ControlX/Control"]
+unique_name_in_owner = true
+texture_normal = ExtResource("2_3hojg")
+action = "jump"
+visibility_mode = 1
+
+[node name="Control" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ControlB" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/Control"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ButtonB" type="TouchScreenButton" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/Control/ControlB"]
+unique_name_in_owner = true
+texture_normal = ExtResource("2_3hojg")
+action = "shoot"
+visibility_mode = 1
+
+[node name="ControlA" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Control" type="Control" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/ControlA"]
+layout_mode = 1
+anchors_preset = 0
+
+[node name="ButtonA" type="TouchScreenButton" parent="HBoxContainerButtons/VBoxContainer/HBoxContainer/ControlA/Control"]
+unique_name_in_owner = true
+texture_normal = ExtResource("2_3hojg")
+action = "jump"
+visibility_mode = 1
